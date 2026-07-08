@@ -44,6 +44,8 @@ if st.button("Predict"):
 
     hasil=response.json()
 
+    print(hasil)
+
     st.success(f"Prediction : {hasil['prediction']}")
 
     st.metric("Probability",f"{hasil['probability']:.2%}")
