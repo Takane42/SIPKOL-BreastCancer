@@ -7,6 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1ZuHiytP6fwluazOKBTJSAzNMoglrRAYc
 """
 
+import os
 import streamlit as st
 import requests
 
@@ -29,7 +30,7 @@ for i in range(30):
 
 if st.button("Predict"):
 
-    url="http://127.0.0.1:8000/predict"
+    url= os.environ.get("API_URL","http://localhost:8000/predict")
 
     response=requests.post(
 
