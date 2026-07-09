@@ -1,7 +1,6 @@
 import os
 import requests
 import streamlit as st
-from sklearn.datasets import load_breast_cancer
 
 # =====================================================
 # Page Configuration
@@ -13,10 +12,42 @@ st.set_page_config(
 )
 
 # =====================================================
-# Load Feature Names
+# Feature Information
 # =====================================================
-dataset = load_breast_cancer()
-feature_names = [name.title() for name in dataset.feature_names]
+feature_info = [
+    ("Mean Radius", "mm"),
+    ("Mean Texture", ""),
+    ("Mean Perimeter", "mm"),
+    ("Mean Area", "mm²"),
+    ("Mean Smoothness", ""),
+    ("Mean Compactness", ""),
+    ("Mean Concavity", ""),
+    ("Mean Concave Points", ""),
+    ("Mean Symmetry", ""),
+    ("Mean Fractal Dimension", ""),
+
+    ("Radius Error", "mm"),
+    ("Texture Error", ""),
+    ("Perimeter Error", "mm"),
+    ("Area Error", "mm²"),
+    ("Smoothness Error", ""),
+    ("Compactness Error", ""),
+    ("Concavity Error", ""),
+    ("Concave Points Error", ""),
+    ("Symmetry Error", ""),
+    ("Fractal Dimension Error", ""),
+
+    ("Worst Radius", "mm"),
+    ("Worst Texture", ""),
+    ("Worst Perimeter", "mm"),
+    ("Worst Area", "mm²"),
+    ("Worst Smoothness", ""),
+    ("Worst Compactness", ""),
+    ("Worst Concavity", ""),
+    ("Worst Concave Points", ""),
+    ("Worst Symmetry", ""),
+    ("Worst Fractal Dimension", ""),
+]
 
 # =====================================================
 # Custom CSS
@@ -24,23 +55,29 @@ feature_names = [name.title() for name in dataset.feature_names]
 st.markdown(
     """
     <style>
+
     .main-title{
         text-align:center;
         font-size:42px;
         font-weight:bold;
-        color:#ff4b4b;
+        color:#E53935;
+        margin-bottom:0;
     }
 
     .subtitle{
         text-align:center;
-        color:#888888;
+        color:gray;
+        margin-top:0;
         margin-bottom:30px;
     }
 
-    .stButton > button{
-        height:3em;
+    .stButton>button{
+        height:55px;
         font-size:18px;
+        font-weight:bold;
+        border-radius:10px;
     }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -50,12 +87,12 @@ st.markdown(
 # Header
 # =====================================================
 st.markdown(
-    '<p class="main-title">🩺 Breast Cancer Prediction</p>',
+    "<h1 class='main-title'>🩺 Breast Cancer Prediction</h1>",
     unsafe_allow_html=True,
 )
 
 st.markdown(
-    '<p class="subtitle">Support Vector Machine (SVM) Classifier</p>',
+    "<p class='subtitle'>Support Vector Machine (SVM) Classifier</p>",
     unsafe_allow_html=True,
 )
 
@@ -63,58 +100,75 @@ st.markdown(
 # Sidebar
 # =====================================================
 with st.sidebar:
+
     st.header("About")
 
-    st.write(
-        """
-This application predicts whether a breast tumor is **Benign** or
-**Malignant** using a trained Support Vector Machine (SVM) model.
-"""
-    )
+    st.write("""
+This application predicts whether a breast tumor is **Benign** or **Malignant**
+using a trained Support Vector Machine (SVM) model.
+""")
 
-    st.info(
-        """
-**Instructions**
+    st.info("""
+### Instructions
 
-1. Enter all 30 feature values.
+1. Enter all patient features.
 2. Click **Predict**.
-3. View the prediction result and confidence score.
-"""
-    )
+3. Review the prediction and confidence score.
+""")
 
 # =====================================================
 # Input Features
 # =====================================================
-st.header("Patient Features")
-
-st.caption("Enter the diagnostic measurements below.")
+st.header("Patient Diagnostic Features")
+st.caption("Enter the measurements obtained from the patient's diagnostic examination.")
 
 inputs = []
 
-cols = st.columns(3)
 
-for i, feature in enumerate(feature_names):
-    with cols[i % 3]:
-        value = st.number_input(
-            label=feature,
-            value=0.0,
-            format="%.5f",
-            help=f"Input value for {feature}",
-        )
-        inputs.append(value)
+def render_inputs(start, end):
+    cols = st.columns(2)
+
+    for i in range(start, end):
+
+        feature, unit = feature_info[i]
+
+        with cols[(i - start) % 2]:
+
+            label = feature if unit == "" else f"{feature} ({unit})"
+
+            value = st.number_input(
+                label=label,
+                value=0.0,
+                format="%.5f",
+                help=f"Input value for {feature}",
+                key=feature,
+            )
+
+            inputs.append(value)
+
+
+with st.expander("📊 Mean Features", expanded=True):
+    render_inputs(0, 10)
+
+with st.expander("📈 Error Features"):
+    render_inputs(10, 20)
+
+with st.expander("📉 Worst Features"):
+    render_inputs(20, 30)
 
 st.divider()
 
 # =====================================================
 # Predict Button
 # =====================================================
-left, center, right = st.columns([1, 1, 1])
+_, center, _ = st.columns([1, 1, 1])
 
 with center:
+
     predict = st.button(
         "🔍 Predict",
-        type="primary",
         use_container_width=True,
+        type="primary",
     )
 
 # =====================================================
@@ -129,7 +183,7 @@ if predict:
 
     try:
 
-        with st.spinner("Predicting..."):
+        with st.spinner("Running prediction..."):
 
             response = requests.post(
                 api_url,
@@ -150,45 +204,44 @@ if predict:
 
         st.header("Prediction Result")
 
-        col1, col2 = st.columns([2, 1])
+        left, right = st.columns([2, 1])
 
-        with col1:
+        with left:
 
             with st.container(border=True):
 
                 if prediction in [1, "Malignant", "malignant"]:
 
-                    st.error("### 🔴 Malignant")
+                    st.error("## 🔴 Malignant")
 
-                    st.write(
-                        """
-The model predicts that the tumor is **Malignant**.
-Further clinical evaluation is recommended.
-"""
-                    )
+                    st.write("""
+The model predicts that the breast tumor is **Malignant**.
+
+Clinical evaluation by a qualified healthcare professional is recommended.
+""")
 
                 else:
 
-                    st.success("### 🟢 Benign")
+                    st.success("## 🟢 Benign")
 
-                    st.write(
-                        """
-The model predicts that the tumor is **Benign**.
-"""
-                    )
+                    st.write("""
+The model predicts that the breast tumor is **Benign**.
+""")
 
-        with col2:
+        with right:
 
             with st.container(border=True):
 
                 st.metric(
-                    label="Confidence",
-                    value=f"{probability:.2%}",
+                    "Confidence",
+                    f"{probability:.2%}",
                 )
 
-                st.progress(min(max(probability, 0.0), 1.0))
+                st.progress(
+                    min(max(probability, 0), 1)
+                )
 
-        with st.expander("View Raw API Response"):
+        with st.expander("Raw API Response"):
 
             st.json(result)
 
@@ -196,7 +249,7 @@ The model predicts that the tumor is **Benign**.
 
         st.error(
             "Unable to connect to the FastAPI server.\n\n"
-            "Make sure the API is running and API_URL is correct."
+            "Please ensure the API server is running."
         )
 
     except requests.exceptions.Timeout:
